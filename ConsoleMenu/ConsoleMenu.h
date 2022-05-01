@@ -146,6 +146,152 @@ void consoleMenu::select()
 		onCursor();
 
 		actions[positionOfSelectingLine].second();
+		Sleep(25);
+	}
+
+	positionOfSelectingLine = 0;
+}
+
+class wconsoleMenu
+{
+	HANDLE window = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO structCursorInfo;
+	COORD point;
+
+	int positionOfSelectingLine = 0;
+	int amountOfActions;
+	vector<pair<wstring, void (*)()>> actions;
+	void drawMenu();
+	void onCursor();
+	void offCursor();
+public:
+	wconsoleMenu();
+	wconsoleMenu(vector<wstring>&, vector<void (*)()>&, bool);
+	void updateActions(vector<wstring>&, vector<void (*)()>&);
+	void select();
+};
+
+wconsoleMenu::wconsoleMenu()
+{
+	GetConsoleCursorInfo(window, &structCursorInfo);
+	point.X = 0;
+	point.Y = 0;
+	amountOfActions = 0;
+}
+
+wconsoleMenu::wconsoleMenu(vector<wstring>& actionNames, vector<void (*)()>& actionFunctions, bool isRoot = false)
+{
+	GetConsoleCursorInfo(window, &structCursorInfo);
+	point.X = 0;
+	point.Y = 0;
+
+	amountOfActions = actionNames.size();
+
+	if (amountOfActions != actionFunctions.size())
+	{
+		wcout << "FATAL ERROR: MENU CAN'T BE CREATED" << endl;
+		_wsystem(L"pause");
+		exit(-1);
+	}
+
+	for (int i = 0; i < amountOfActions; i++)
+		actions.push_back(pair<wstring, void (*)()>(actionNames[i], actionFunctions[i]));
+	actions.push_back(pair<wstring, void (*)()>((isRoot) ? L"Exit" : L"Back", []() {}));
+	amountOfActions++;
+}
+
+void wconsoleMenu::onCursor()
+{
+	structCursorInfo.bVisible = TRUE;
+	SetConsoleCursorInfo(window, &structCursorInfo);
+}
+
+void wconsoleMenu::offCursor()
+{
+	structCursorInfo.bVisible = FALSE;
+	SetConsoleCursorInfo(window, &structCursorInfo);
+}
+
+void wconsoleMenu::updateActions(vector<wstring>& actionNames, vector<void (*)()>& actionFunctions)
+{
+	actions.clear();
+	amountOfActions = actionNames.size();
+
+	if (amountOfActions != actionFunctions.size())
+	{
+		wcout << "FATAL ERROR: MENU CAN'T BE CREATED" << endl;
+		_wsystem(L"pause");
+		exit(-1);
+	}
+
+	for (int i = 0; i < amountOfActions; i++)
+		actions.push_back(pair<wstring, void (*)()>(actionNames[i], actionFunctions[i]));
+}
+
+void wconsoleMenu::drawMenu()
+{
+	_wsystem(L"cls");
+
+	point.X = 0; point.Y = 0;
+	wcout << "Select:";
+	point.X = 2;
+
+	for (int i = 0; i < amountOfActions; i++)
+	{
+		point.Y = i + 1;
+		SetConsoleCursorPosition(window, point);
+
+		if (i != positionOfSelectingLine)
+		{
+			wcout << actions[i].first;
+		}
+		else
+		{
+			SetConsoleTextAttribute(window, BACKGROUND_WHITE);
+			wcout << actions[i].first;
+			SetConsoleTextAttribute(window, BACKGROUND_BLACK);
+		}
+	}
+}
+
+void wconsoleMenu::select()
+{
+	while (positionOfSelectingLine != amountOfActions - 1)
+	{
+		offCursor();
+
+		drawMenu();
+		while (GetAsyncKeyState(VK_RETURN)) {}
+
+		for (;;)
+		{
+			if (GetAsyncKeyState(VK_UP))
+			{
+				if (positionOfSelectingLine != 0) positionOfSelectingLine--;
+				else positionOfSelectingLine = amountOfActions - 1;
+				drawMenu();
+			}
+			else if (GetAsyncKeyState(VK_DOWN))
+			{
+				if (positionOfSelectingLine != amountOfActions - 1) positionOfSelectingLine++;
+				else positionOfSelectingLine = 0;
+				drawMenu();
+			}
+			else if (GetAsyncKeyState(VK_RETURN))
+			{
+				wcin.ignore(LLONG_MAX, '\n');
+				while (_kbhit()) wcin.get();
+				break;
+			}
+
+			Sleep(200);
+		}
+		_wsystem(L"cls");
+
+		onCursor();
+
+		actions[positionOfSelectingLine].second();
+		Sleep(25);
 	}
 
 	positionOfSelectingLine = 0;
