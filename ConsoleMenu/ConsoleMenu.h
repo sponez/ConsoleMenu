@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <vector>
 #include <windows.h>
 #include <conio.h>
@@ -9,7 +9,8 @@ static const int BACKGROUND_BLACK = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGRO
 class consoleMenu
 {
 protected:
-	HANDLE window = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	HWND consoleWindow = GetConsoleWindow();
 	CONSOLE_CURSOR_INFO structCursorInfo;
 	COORD point;
 
@@ -28,7 +29,7 @@ public:
 
 consoleMenu::consoleMenu()
 {
-	GetConsoleCursorInfo(window, &structCursorInfo);
+	GetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 	point.X = 0;
 	point.Y = 0;
 	amountOfActions = 0;
@@ -36,7 +37,7 @@ consoleMenu::consoleMenu()
 
 consoleMenu::consoleMenu(vector<string>& actionNames, vector<void (*)()>& actionFunctions, bool isRoot = false)
 {
-	GetConsoleCursorInfo(window, &structCursorInfo);
+	GetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 	point.X = 0;
 	point.Y = 0;
 
@@ -58,13 +59,13 @@ consoleMenu::consoleMenu(vector<string>& actionNames, vector<void (*)()>& action
 void consoleMenu::onCursor()
 {
 	structCursorInfo.bVisible = TRUE;
-	SetConsoleCursorInfo(window, &structCursorInfo);
+	SetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 }
 
 void consoleMenu::offCursor()
 {
 	structCursorInfo.bVisible = FALSE;
-	SetConsoleCursorInfo(window, &structCursorInfo);
+	SetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 }
 
 void consoleMenu::updateActions(vector<string>& actionNames, vector<void (*)()>& actionFunctions)
@@ -94,7 +95,7 @@ void consoleMenu::drawMenu()
 	for (int i = 0; i < amountOfActions; i++)
 	{
 		point.Y = i + 1;
-		SetConsoleCursorPosition(window, point);
+		SetConsoleCursorPosition(consoleHandle, point);
 
 		if (i != positionOfSelectingLine)
 		{
@@ -102,9 +103,9 @@ void consoleMenu::drawMenu()
 		}
 		else
 		{
-			SetConsoleTextAttribute(window, BACKGROUND_WHITE);
+			SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
 			cout << actions[i].first;
-			SetConsoleTextAttribute(window, BACKGROUND_BLACK);
+			SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 		}
 	}
 }
@@ -120,26 +121,43 @@ void consoleMenu::select()
 
 		for (;;)
 		{
-			if (GetAsyncKeyState(VK_UP))
+			if (!IsIconic(consoleWindow))
 			{
-				if (positionOfSelectingLine != 0) positionOfSelectingLine--;
-				else positionOfSelectingLine = amountOfActions - 1;
-				drawMenu();
-			}
-			else if (GetAsyncKeyState(VK_DOWN))
-			{
-				if (positionOfSelectingLine != amountOfActions - 1) positionOfSelectingLine++;
-				else positionOfSelectingLine = 0;
-				drawMenu();
-			}
-			else if (GetAsyncKeyState(VK_RETURN))
-			{
-				cin.ignore(LLONG_MAX, '\n');
-				while (_kbhit()) cin.get();
-				break;
+				if (GetAsyncKeyState(VK_LBUTTON))
+				{
+					POINT cursorPosition;
+					RECT windowRect;
+					GetCursorPos(&cursorPosition);
+					GetWindowRect(consoleWindow, &windowRect);
+					if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
+						ShowWindow(consoleWindow, SW_MINIMIZE);
+				}
+				else
+				{
+					if (GetAsyncKeyState(VK_UP))
+					{
+						if (positionOfSelectingLine != 0) positionOfSelectingLine--;
+						else positionOfSelectingLine = amountOfActions - 1;
+						drawMenu();
+					}
+
+					if (GetAsyncKeyState(VK_DOWN))
+					{
+						if (positionOfSelectingLine != amountOfActions - 1) positionOfSelectingLine++;
+						else positionOfSelectingLine = 0;
+						drawMenu();
+					}
+
+					if (GetAsyncKeyState(VK_RETURN))
+					{
+						wcin.ignore(LLONG_MAX, '\n');
+						while (_kbhit()) wcin.get();
+						break;
+					}
+				}
 			}
 
-			Sleep(100);
+			Sleep(175);
 		}
 		system("cls");
 
@@ -154,7 +172,8 @@ void consoleMenu::select()
 
 class wconsoleMenu
 {
-	HANDLE window = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	HWND consoleWindow = GetConsoleWindow();
 	CONSOLE_CURSOR_INFO structCursorInfo;
 	COORD point;
 
@@ -173,7 +192,7 @@ public:
 
 wconsoleMenu::wconsoleMenu()
 {
-	GetConsoleCursorInfo(window, &structCursorInfo);
+	GetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 	point.X = 0;
 	point.Y = 0;
 	amountOfActions = 0;
@@ -181,7 +200,7 @@ wconsoleMenu::wconsoleMenu()
 
 wconsoleMenu::wconsoleMenu(vector<wstring>& actionNames, vector<void (*)()>& actionFunctions, bool isRoot = false)
 {
-	GetConsoleCursorInfo(window, &structCursorInfo);
+	GetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 	point.X = 0;
 	point.Y = 0;
 
@@ -203,13 +222,13 @@ wconsoleMenu::wconsoleMenu(vector<wstring>& actionNames, vector<void (*)()>& act
 void wconsoleMenu::onCursor()
 {
 	structCursorInfo.bVisible = TRUE;
-	SetConsoleCursorInfo(window, &structCursorInfo);
+	SetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 }
 
 void wconsoleMenu::offCursor()
 {
 	structCursorInfo.bVisible = FALSE;
-	SetConsoleCursorInfo(window, &structCursorInfo);
+	SetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 }
 
 void wconsoleMenu::updateActions(vector<wstring>& actionNames, vector<void (*)()>& actionFunctions)
@@ -239,7 +258,7 @@ void wconsoleMenu::drawMenu()
 	for (int i = 0; i < amountOfActions; i++)
 	{
 		point.Y = i + 1;
-		SetConsoleCursorPosition(window, point);
+		SetConsoleCursorPosition(consoleHandle, point);
 
 		if (i != positionOfSelectingLine)
 		{
@@ -247,9 +266,9 @@ void wconsoleMenu::drawMenu()
 		}
 		else
 		{
-			SetConsoleTextAttribute(window, BACKGROUND_WHITE);
+			SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
 			wcout << actions[i].first;
-			SetConsoleTextAttribute(window, BACKGROUND_BLACK);
+			SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 		}
 	}
 }
@@ -258,6 +277,7 @@ void wconsoleMenu::select()
 {
 	while (positionOfSelectingLine != amountOfActions - 1)
 	{
+		FlushConsoleInputBuffer(consoleHandle);
 		offCursor();
 
 		drawMenu();
@@ -265,26 +285,43 @@ void wconsoleMenu::select()
 
 		for (;;)
 		{
-			if (GetAsyncKeyState(VK_UP))
+			if (!IsIconic(consoleWindow))
 			{
-				if (positionOfSelectingLine != 0) positionOfSelectingLine--;
-				else positionOfSelectingLine = amountOfActions - 1;
-				drawMenu();
-			}
-			else if (GetAsyncKeyState(VK_DOWN))
-			{
-				if (positionOfSelectingLine != amountOfActions - 1) positionOfSelectingLine++;
-				else positionOfSelectingLine = 0;
-				drawMenu();
-			}
-			else if (GetAsyncKeyState(VK_RETURN))
-			{
-				wcin.ignore(LLONG_MAX, '\n');
-				while (_kbhit()) wcin.get();
-				break;
+				if (GetAsyncKeyState(VK_LBUTTON))
+				{
+					POINT cursorPosition;
+					RECT windowRect;
+					GetCursorPos(&cursorPosition);
+					GetWindowRect(consoleWindow, &windowRect);
+					if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
+						ShowWindow(consoleWindow, SW_MINIMIZE);
+				}
+				else
+				{
+					if (GetAsyncKeyState(VK_UP))
+					{
+						if (positionOfSelectingLine != 0) positionOfSelectingLine--;
+						else positionOfSelectingLine = amountOfActions - 1;
+						drawMenu();
+					}
+
+					if (GetAsyncKeyState(VK_DOWN))
+					{
+						if (positionOfSelectingLine != amountOfActions - 1) positionOfSelectingLine++;
+						else positionOfSelectingLine = 0;
+						drawMenu();
+					}
+
+					if (GetAsyncKeyState(VK_RETURN))
+					{
+						wcin.ignore(LLONG_MAX, '\n');
+						while (_kbhit()) wcin.get();
+						break;
+					}
+				}
 			}
 
-			Sleep(200);
+			Sleep(175);
 		}
 		_wsystem(L"cls");
 
