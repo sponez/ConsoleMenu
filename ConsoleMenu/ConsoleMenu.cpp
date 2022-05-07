@@ -4,19 +4,23 @@
 
 using namespace std;
 
-void emptyFunc() { system("pause"); }
-void toBranch();
+void emptyFunc(string str)
+{
+	cout << str << endl;
+	system("pause");
+}
+void toBranch(string);
 
-vector<string> options = { "1" , "2" };
-vector<void (*)()> funcsRoot({ toBranch, emptyFunc }), funcsBranch = { emptyFunc, emptyFunc };
+vector<string> options = { "One" , "Two" };
+vector<void (*)(string)> funcsRoot({ toBranch, emptyFunc }), funcsBranch = { emptyFunc, emptyFunc };
 
-consoleMenu root(options, funcsRoot, true);
+consoleMenu root("Select", options, funcsRoot, "Exit");
 consoleMenu branch;
 
-void toBranch() { branch.select(); }
+void toBranch(string) { branch.select(); }
 
 int main()
 {
-	branch = consoleMenu(options, funcsBranch);
+	branch = consoleMenu("Select", options, funcsBranch, "Back");
 	root.select();
 }
