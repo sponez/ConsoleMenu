@@ -1,7 +1,10 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <windows.h>
 #include <conio.h>
+#include <fcntl.h>
+#include <io.h>
 using namespace std;
 static const int BACKGROUND_WHITE = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
 static const int BACKGROUND_BLACK = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
@@ -16,10 +19,11 @@ protected:
 
 	string selectText;
 	string exitText;
-	int currentPosition;
-	int amountOfOptions;
+	size_t currentPosition;
+	size_t amountOfOptions;
 	vector<pair<string, void (*)(string)>> Options;
 	void drawMenu();
+	void redrawMenu(short);
 	void onCursor();
 	void offCursor();
 public:
@@ -119,6 +123,47 @@ void consoleMenu::drawMenu()
 	}
 }
 
+void consoleMenu::redrawMenu(short action)
+{
+	point.X = 2; point.Y = currentPosition + 1;
+	SetConsoleCursorPosition(consoleHandle, point);
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
+	cout << Options[currentPosition].first;
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
+
+	if (action == -1)
+	{
+		if (currentPosition != amountOfOptions - 1)
+		{
+			point.Y = currentPosition + 2;
+			SetConsoleCursorPosition(consoleHandle, point);
+			cout << Options[currentPosition + 1].first;
+		}
+		else
+		{
+			point.Y = 1;
+			SetConsoleCursorPosition(consoleHandle, point);
+			cout << Options[0].first;
+		}
+	}
+
+	if (action == 1)
+	{
+		if (currentPosition != 0)
+		{
+			point.Y = currentPosition;
+			SetConsoleCursorPosition(consoleHandle, point);
+			cout << Options[currentPosition - 1].first;
+		}
+		else
+		{
+			point.Y = amountOfOptions;
+			SetConsoleCursorPosition(consoleHandle, point);
+			cout << Options[amountOfOptions - 1].first;
+		}
+	}
+}
+
 void consoleMenu::select()
 {
 	while (currentPosition != amountOfOptions - 1)
@@ -146,14 +191,14 @@ void consoleMenu::select()
 				{
 					if (currentPosition != 0) currentPosition--;
 					else currentPosition = amountOfOptions - 1;
-					drawMenu();
+					redrawMenu(-1);
 				}
 
 				if (GetAsyncKeyState(VK_DOWN))
 				{
 					if (currentPosition != amountOfOptions - 1) currentPosition++;
 					else currentPosition = 0;
-					drawMenu();
+					redrawMenu(1);
 				}
 
 				if (GetAsyncKeyState(VK_RETURN))
@@ -164,14 +209,13 @@ void consoleMenu::select()
 				}
 			}
 
-			Sleep(175);
+			Sleep(100);
 		}
 		system("cls");
 
 		onCursor();
 
 		Options[currentPosition].second(Options[currentPosition].first);
-		Sleep(25);
 	}
 
 	currentPosition = 0;
@@ -186,10 +230,11 @@ class wconsoleMenu
 
 	wstring selectText;
 	wstring exitText;
-	int currentPosition;
-	int amountOfOptions;
+	size_t currentPosition;
+	size_t amountOfOptions;
 	vector<pair<wstring, void (*)(wstring)>> Options;
 	void drawMenu();
+	void redrawMenu(short);
 	void onCursor();
 	void offCursor();
 public:
@@ -212,6 +257,10 @@ wconsoleMenu::wconsoleMenu()
 
 wconsoleMenu::wconsoleMenu(wstring selectText, vector<wstring>& optionNames, vector<void (*)(wstring)>& optionFunctions, wstring exitText)
 {
+	ignore = _setmode(_fileno(stdout), _O_U16TEXT);
+	ignore = _setmode(_fileno(stdin), _O_U16TEXT);
+	ignore = _setmode(_fileno(stderr), _O_U16TEXT);
+
 	GetConsoleCursorInfo(consoleHandle, &structCursorInfo);
 	point.X = 0;
 	point.Y = 0;
@@ -289,6 +338,47 @@ void wconsoleMenu::drawMenu()
 	}
 }
 
+void wconsoleMenu::redrawMenu(short action)
+{
+	point.X = 2; point.Y = currentPosition + 1;
+	SetConsoleCursorPosition(consoleHandle, point);
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
+	wcout << Options[currentPosition].first;
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
+
+	if (action == -1)
+	{
+		if (currentPosition != amountOfOptions - 1)
+		{
+			point.Y = currentPosition + 2;
+			SetConsoleCursorPosition(consoleHandle, point);
+			wcout << Options[currentPosition + 1].first;
+		}
+		else
+		{
+			point.Y = 1;
+			SetConsoleCursorPosition(consoleHandle, point);
+			wcout << Options[0].first;
+		}
+	}
+
+	if (action == 1)
+	{
+		if (currentPosition != 0)
+		{
+			point.Y = currentPosition;
+			SetConsoleCursorPosition(consoleHandle, point);
+			wcout << Options[currentPosition - 1].first;
+		}
+		else
+		{
+			point.Y = amountOfOptions;
+			SetConsoleCursorPosition(consoleHandle, point);
+			wcout << Options[amountOfOptions - 1].first;
+		}
+	}
+}
+
 void wconsoleMenu::select()
 {
 	while (currentPosition != amountOfOptions - 1)
@@ -317,14 +407,14 @@ void wconsoleMenu::select()
 				{
 					if (currentPosition != 0) currentPosition--;
 					else currentPosition = amountOfOptions - 1;
-					drawMenu();
+					redrawMenu(-1);
 				}
 
 				if (GetAsyncKeyState(VK_DOWN))
 				{
 					if (currentPosition != amountOfOptions - 1) currentPosition++;
 					else currentPosition = 0;
-					drawMenu();
+					redrawMenu(1);
 				}
 
 				if (GetAsyncKeyState(VK_RETURN))
@@ -335,14 +425,13 @@ void wconsoleMenu::select()
 				}
 			}
 
-			Sleep(175);
+			Sleep(100);
 		}
 		_wsystem(L"cls");
 
 		onCursor();
 
 		Options[currentPosition].second(Options[currentPosition].first);
-		Sleep(25);
 	}
 
 	currentPosition = 0;
