@@ -3,8 +3,8 @@
 #include <vector>
 #include <windows.h>
 #include <conio.h>
-#include <fcntl.h>
 #include <io.h>
+#include <fcntl.h>
 using namespace std;
 static const int BACKGROUND_WHITE = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
 static const int BACKGROUND_BLACK = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
@@ -111,25 +111,19 @@ void consoleMenu::drawMenu()
 		SetConsoleCursorPosition(consoleHandle, point);
 
 		if (i != currentPosition)
-		{
 			cout << Options[i].first;
-		}
-		else
-		{
-			SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
-			cout << Options[i].first;
-			SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
-		}
 	}
-}
 
-void consoleMenu::redrawMenu(short action)
-{
-	point.X = 2; point.Y = currentPosition + 1;
+	point.Y = currentPosition + 1;
 	SetConsoleCursorPosition(consoleHandle, point);
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
 	cout << Options[currentPosition].first;
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
+}
+
+void consoleMenu::redrawMenu(short action)
+{
+	point.X = 2;
 
 	if (action == -1)
 	{
@@ -162,18 +156,25 @@ void consoleMenu::redrawMenu(short action)
 			cout << Options[amountOfOptions - 1].first;
 		}
 	}
+
+	point.Y = currentPosition + 1;
+	SetConsoleCursorPosition(consoleHandle, point);
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
+	cout << Options[currentPosition].first;
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 }
 
 void consoleMenu::select()
 {
 	while (currentPosition != amountOfOptions - 1)
 	{
+		FlushConsoleInputBuffer(consoleHandle);
 		offCursor();
 
 		drawMenu();
-		while (GetAsyncKeyState(VK_RETURN)) {}
+		while (GetAsyncKeyState(VK_RETURN)) { Sleep(10); }
 
-		for (;;)
+		for (;; Sleep(10))
 		{
 			if (!IsIconic(consoleWindow))
 			{
@@ -185,31 +186,38 @@ void consoleMenu::select()
 					GetWindowRect(consoleWindow, &windowRect);
 					if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
 						ShowWindow(consoleWindow, SW_MINIMIZE);
+
+					while (GetAsyncKeyState(VK_LBUTTON)) { Sleep(10); }
 				}
 
-				if (GetAsyncKeyState(VK_UP))
+				if (GetAsyncKeyState(VK_MENU) && GetAsyncKeyState(VK_TAB))
+					ShowWindow(consoleWindow, SW_MINIMIZE);
+
+				for (int i = 0; GetAsyncKeyState(VK_UP); Sleep(100 - 2 * i))
 				{
 					if (currentPosition != 0) currentPosition--;
 					else currentPosition = amountOfOptions - 1;
 					redrawMenu(-1);
+
+					if (i < 40) i++;
 				}
 
-				if (GetAsyncKeyState(VK_DOWN))
+				for (int i = 0; GetAsyncKeyState(VK_DOWN); Sleep(100 - 2 * i))
 				{
 					if (currentPosition != amountOfOptions - 1) currentPosition++;
 					else currentPosition = 0;
 					redrawMenu(1);
+
+					if (i < 40) i++;
 				}
 
 				if (GetAsyncKeyState(VK_RETURN))
 				{
-					wcin.ignore(LLONG_MAX, '\n');
-					while (_kbhit()) wcin.get();
+					cin.ignore(LLONG_MAX, '\n');
+					while (_kbhit()) cin.get();
 					break;
 				}
 			}
-
-			Sleep(100);
 		}
 		system("cls");
 
@@ -271,7 +279,7 @@ wconsoleMenu::wconsoleMenu(wstring selectText, vector<wstring>& optionNames, vec
 
 	if (amountOfOptions != optionFunctions.size())
 	{
-		wcout << "FATAL ERROR: MENU CAN'T BE CREATED" << endl;
+		wcout << L"FATAL ERROR: MENU CAN'T BE CREATED" << endl;
 		_wsystem(L"pause");
 		exit(-1);
 	}
@@ -301,7 +309,7 @@ void wconsoleMenu::updateOptions(vector<wstring>& optionNames, vector<void (*)(w
 
 	if (amountOfOptions != optionFunctions.size())
 	{
-		wcout << "FATAL ERROR: MENU CAN'T BE CREATED" << endl;
+		wcout << L"FATAL ERROR: MENU CAN'T BE CREATED" << endl;
 		_wsystem(L"pause");
 		exit(-1);
 	}
@@ -326,25 +334,19 @@ void wconsoleMenu::drawMenu()
 		SetConsoleCursorPosition(consoleHandle, point);
 
 		if (i != currentPosition)
-		{
 			wcout << Options[i].first;
-		}
-		else
-		{
-			SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
-			wcout << Options[i].first;
-			SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
-		}
 	}
-}
 
-void wconsoleMenu::redrawMenu(short action)
-{
-	point.X = 2; point.Y = currentPosition + 1;
+	point.Y = currentPosition + 1;
 	SetConsoleCursorPosition(consoleHandle, point);
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
 	wcout << Options[currentPosition].first;
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
+}
+
+void wconsoleMenu::redrawMenu(short action)
+{
+	point.X = 2;
 
 	if (action == -1)
 	{
@@ -377,6 +379,12 @@ void wconsoleMenu::redrawMenu(short action)
 			wcout << Options[amountOfOptions - 1].first;
 		}
 	}
+
+	point.Y = currentPosition + 1;
+	SetConsoleCursorPosition(consoleHandle, point);
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
+	wcout << Options[currentPosition].first;
+	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 }
 
 void wconsoleMenu::select()
@@ -387,9 +395,9 @@ void wconsoleMenu::select()
 		offCursor();
 
 		drawMenu();
-		while (GetAsyncKeyState(VK_RETURN)) {}
+		while (GetAsyncKeyState(VK_RETURN)) { Sleep(10); }
 
-		for (;;)
+		for (;;Sleep(10))
 		{
 			if (!IsIconic(consoleWindow))
 			{
@@ -401,20 +409,29 @@ void wconsoleMenu::select()
 					GetWindowRect(consoleWindow, &windowRect);
 					if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
 						ShowWindow(consoleWindow, SW_MINIMIZE);
+
+					while (GetAsyncKeyState(VK_LBUTTON)) { Sleep(10); }
 				}
 
-				if (GetAsyncKeyState(VK_UP))
+				if (GetAsyncKeyState(VK_MENU) && GetAsyncKeyState(VK_TAB))
+					ShowWindow(consoleWindow, SW_MINIMIZE);
+
+				for (int i = 0; GetAsyncKeyState(VK_UP); Sleep(100 - 2 * i))
 				{
 					if (currentPosition != 0) currentPosition--;
 					else currentPosition = amountOfOptions - 1;
 					redrawMenu(-1);
+
+					if (i < 40) i++;
 				}
 
-				if (GetAsyncKeyState(VK_DOWN))
+				for (int i = 0; GetAsyncKeyState(VK_DOWN); Sleep(100 - 2 * i))
 				{
 					if (currentPosition != amountOfOptions - 1) currentPosition++;
 					else currentPosition = 0;
 					redrawMenu(1);
+
+					if (i < 40) i++;
 				}
 
 				if (GetAsyncKeyState(VK_RETURN))
@@ -424,8 +441,6 @@ void wconsoleMenu::select()
 					break;
 				}
 			}
-
-			Sleep(100);
 		}
 		_wsystem(L"cls");
 
