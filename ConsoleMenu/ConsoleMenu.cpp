@@ -1,26 +1,26 @@
 ﻿#include <iostream>
 #include <vector>
-#include "ConsoleMenu.h"
+#include "wconsoleMenu.h"
 
 using namespace std;
 
-void emptyFunc(string str)
+void emptyFunc(wstring str)
 {
-	cout << str << endl;
-	system("pause");
+	wcout << str << endl;
+	_wsystem(L"pause");
 }
-void toBranch(string);
+void toBranch(wstring);
 
-vector<string> options = { "One" , "Two" };
-vector<void (*)(string)> funcsRoot({ toBranch, emptyFunc }), funcsBranch = { emptyFunc, emptyFunc };
+vector<wstring> options = { L"Один" , L"Два" };
+vector<void (*)(wstring)> funcsRoot({ toBranch, [](wstring) {} });
 
-consoleMenu root("Select", options, funcsRoot, "Exit");
-consoleMenu branch;
+wconsoleMenu root(options, funcsRoot);
+wconsoleMenu branch;
 
-void toBranch(string) { branch.select(); }
+void toBranch(wstring) { branch.cyclicSelect(); }
 
 int main()
 {
-	branch = consoleMenu("Select", options, funcsBranch, "Back");
-	root.select();
+	branch = wconsoleMenu(options, emptyFunc, L"", L"Назад");
+	wcout << root.singleSelectWithFilter() << endl;
 }

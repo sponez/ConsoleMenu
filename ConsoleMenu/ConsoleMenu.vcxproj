@@ -144,7 +144,9 @@
     <ClCompile Include="ConsoleMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConsoleMenu.h" />
+    <ClInclude Include="consoleMenu.h" />
+    <ClInclude Include="consoleParameters.h" />
+    <ClInclude Include="wconsoleMenu.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

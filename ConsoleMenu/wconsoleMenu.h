@@ -9,27 +9,27 @@ using namespace std;
 static const int BACKGROUND_WHITE = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
 static const int BACKGROUND_BLACK = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
 
-class consoleMenu : consoleParameters
+class wconsoleMenu : consoleParameters
 {
-	string selectText{};
-	string exitText{};
+	wstring selectText{};
+	wstring exitText{};
 	bool isSelectTextEmpty{};
 	bool isExitTextEmpty{};
 	short currentPosition{};
-	vector<pair<string, void (*)(string)>> options{};
+	vector<pair<wstring, void (*)(wstring)>> options{};
 
-	void menuCreator(vector<string>&, string, string); //Manual initializer
-	void drawMenu(vector<pair<string, void (*)(string)>>&, string); //Draw all options
-	void redrawMenu(vector<pair<string, void (*)(string)>>& , short); //Redraw changed options
-	bool selectController(vector<pair<string, void (*)(string)>>&, string); //Controller for menu
-	void displayFilteredOptions(string&, vector<pair<string, void (*)(string)>>&); //If use select with filter, this is necessary to display the sutable options
-	vector<pair<string, void (*)(string)>> optionsFilterer(string&); //If use select with filter, this is necessary to filter options by characters
+	void menuCreator(vector<wstring>&, wstring, wstring); //Manual initializer
+	void drawMenu(vector<pair<wstring, void (*)(wstring)>>&, wstring); //Draw all options
+	void redrawMenu(vector<pair<wstring, void (*)(wstring)>>&, short); //Redraw changed options
+	bool selectController(vector<pair<wstring, void (*)(wstring)>>&, wstring); //Controller for menu
+	void displayFilteredOptions(wstring&, vector<pair<wstring, void (*)(wstring)>>&); //If use select with filter, this is necessary to display the sutable options
+	vector<pair<wstring, void (*)(wstring)>> optionsFilterer(wstring&); //If use select with filter, this is necessary to filter options by characters
 
 public:
-//Initializers
-	consoleMenu() {}; //Empty console menu
-	consoleMenu(vector<string>&, vector<void (*)(string)>&, string, string); //Console menu with different functions
-	consoleMenu(vector<string>&, void (*function)(string), string, string); //Console menu with one function
+	//Initializers
+	wconsoleMenu() {}; //Empty console menu
+	wconsoleMenu(vector<wstring>&, vector<void (*)(wstring)>&, wstring, wstring); //Console menu with different functions
+	wconsoleMenu(vector<wstring>&, void (*function)(wstring), wstring, wstring); //Console menu with one function
 
 //Other public functions
 	short singleSelect();
@@ -38,12 +38,16 @@ public:
 	void cyclicSelectWithFilter();
 };
 
-void consoleMenu::menuCreator(vector<string>& optionNames, string selectText, string exitText)
+void wconsoleMenu::menuCreator(vector<wstring>& optionNames, wstring selectText, wstring exitText)
 {
+	ignore = _setmode(_fileno(stdout), _O_U16TEXT);
+	ignore = _setmode(_fileno(stdin), _O_U16TEXT);
+	ignore = _setmode(_fileno(stderr), _O_U16TEXT);
+
 	if (optionNames.size() > SHRT_MAX)
 	{
-		cout << "FATAL ERROR. MENU CAN'T BE CREATED. TOO MANY OPTIONS." << endl;
-		system("pause");
+		wcout << L"FATAL ERROR. MENU CAN'T BE CREATED. TOO MANY OPTIONS." << endl;
+		_wsystem(L"pause");
 		exit(-1);
 	}
 
@@ -52,45 +56,45 @@ void consoleMenu::menuCreator(vector<string>& optionNames, string selectText, st
 	point.Y = 0;
 
 	this->selectText = selectText;
-	isSelectTextEmpty = (selectText == "");
+	isSelectTextEmpty = (selectText == L"");
 
 	this->exitText = exitText;
-	isExitTextEmpty = (exitText == "");
+	isExitTextEmpty = (exitText == L"");
 
 	currentPosition = 0;
 }
 
-consoleMenu::consoleMenu(vector<string>& optionNames, vector<void (*)(string)>& optionFunctions, string selectText = "", string exitText = "")
+wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, vector<void (*)(wstring)>& optionFunctions, wstring selectText = L"", wstring exitText = L"")
 {
 	menuCreator(optionNames, selectText, exitText);
 
 	if (optionNames.size() != optionFunctions.size())
 	{
-		cout << "FATAL ERROR. MENU CAN'T BE CREATED. SIZES OF OPTIONS' NAMES ARRAY AND FUNCTIONS' ARRAY ARE DIFFERENT." << endl;
-		system("pause");
+		wcout << L"FATAL ERROR. MENU CAN'T BE CREATED. SIZES OF OPTIONS' NAMES ARRAY AND FUNCTIONS' ARRAY ARE DIFFERENT." << endl;
+		_wsystem(L"pause");
 		exit(-2);
 	}
 
 	for (unsigned short i = 0; i < optionNames.size(); i++)
-		options.push_back(pair<string, void (*)(string)>(optionNames[i], optionFunctions[i]));
+		options.push_back(pair<wstring, void (*)(wstring)>(optionNames[i], optionFunctions[i]));
 }
 
-consoleMenu::consoleMenu(vector<string>& optionNames, void(*function)(string), string selectText = "", string exitText = "")
+wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, void(*function)(wstring), wstring selectText = L"", wstring exitText = L"")
 {
 	menuCreator(optionNames, selectText, exitText);
 
 	for (unsigned short i = 0; i < optionNames.size(); i++)
-		options.push_back(pair<string, void (*)(string)>(optionNames[i], function));
+		options.push_back(pair<wstring, void (*)(wstring)>(optionNames[i], function));
 }
 
-void consoleMenu::drawMenu(vector<pair<string, void (*)(string)>>& options, string filterText)
+void wconsoleMenu::drawMenu(vector<pair<wstring, void (*)(wstring)>>& options, wstring filterText)
 {
-	system("cls");
+	_wsystem(L"cls");
 
 	if (!isSelectTextEmpty)
 	{
 		point.X = point.Y = 0;
-		cout << selectText << filterText;
+		wcout << selectText << filterText;
 	}
 
 	point.X = 2;
@@ -100,35 +104,35 @@ void consoleMenu::drawMenu(vector<pair<string, void (*)(string)>>& options, stri
 		SetConsoleCursorPosition(consoleHandle, point);
 
 		if (i != currentPosition)
-			cout << options[i].first;
+			wcout << options[i].first;
 	}
 
 	point.Y = (short)!isSelectTextEmpty + currentPosition;
 	SetConsoleCursorPosition(consoleHandle, point);
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
-	cout << options[currentPosition].first;
+	wcout << options[currentPosition].first;
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 }
 
-void consoleMenu::redrawMenu(vector<pair<string, void (*)(string)>>& options, short action)
+void wconsoleMenu::redrawMenu(vector<pair<wstring, void (*)(wstring)>>& options, short action)
 {
 	short previousPosition = static_cast<short>((options.size() + currentPosition - action) % options.size()); //Find previous position number
 
 	point.X = 2; //Set space from border
 	point.Y = (short)!isSelectTextEmpty + previousPosition; //Set position of the cursor on previous option
 	SetConsoleCursorPosition(consoleHandle, point);
-	cout << options[previousPosition].first; //Draw previous option with black background
+	wcout << options[previousPosition].first; //Draw previous option with black background
 
 	point.Y = (short)!isSelectTextEmpty + currentPosition; //Set position of the cursor on current option
 	SetConsoleCursorPosition(consoleHandle, point);
 
 	//Draw previous option with white background
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_WHITE);
-	cout << options[currentPosition].first;
+	wcout << options[currentPosition].first;
 	SetConsoleTextAttribute(consoleHandle, BACKGROUND_BLACK);
 }
 
-bool consoleMenu::selectController(vector<pair<string, void (*)(string)>>& options, string filterText = "")
+bool wconsoleMenu::selectController(vector<pair<wstring, void (*)(wstring)>>& options, wstring filterText = L"")
 {
 	FlushConsoleInputBuffer(consoleHandle);
 	offCursor();
@@ -172,11 +176,11 @@ bool consoleMenu::selectController(vector<pair<string, void (*)(string)>>& optio
 
 		if (GetAsyncKeyState(VK_RETURN))
 		{
-			cin.ignore(LLONG_MAX, '\n');
+			wcin.ignore(LLONG_MAX, '\n');
 			while (_kbhit()) ignore = _getch();
 
 			onCursor();
-			system("cls");
+			_wsystem(L"cls");
 
 			return true;
 		}
@@ -187,19 +191,19 @@ bool consoleMenu::selectController(vector<pair<string, void (*)(string)>>& optio
 
 			currentPosition = 0;
 			onCursor();
-			system("cls");
+			_wsystem(L"cls");
 
 			return false;
 		}
 	}
 }
 
-short consoleMenu::singleSelect()
+short wconsoleMenu::singleSelect()
 {
 	if (options.size() == 0) return -1;
 	currentPosition = 0;
 
-	if (!isExitTextEmpty) options.push_back(pair<string, void (*)(string)>(exitText, [](string) {}));
+	if (!isExitTextEmpty) options.push_back(pair<wstring, void (*)(wstring)>(exitText, [](wstring) {}));
 	if (selectController(options))
 	{
 		options[currentPosition].second(options[currentPosition].first);
@@ -216,41 +220,41 @@ short consoleMenu::singleSelect()
 		return -1;
 }
 
-void consoleMenu::cyclicSelect()
+void wconsoleMenu::cyclicSelect()
 {
 	if (options.size() == 0) return;
 
-	if (!isExitTextEmpty) options.push_back(pair<string, void (*)(string)>(exitText, [](string) {}));
+	if (!isExitTextEmpty) options.push_back(pair<wstring, void (*)(wstring)>(exitText, [](wstring) {}));
 	do
 	{
 		if (selectController(options))
 			options[currentPosition].second(options[currentPosition].first);
 		else
 			return;
-	} 	while (isExitTextEmpty || currentPosition != options.size() - 1);
+	} while (isExitTextEmpty || currentPosition != options.size() - 1);
 	if (!isExitTextEmpty) options.pop_back();
 
 	currentPosition = 0;
 }
 
-vector<pair<string, void (*)(string)>> consoleMenu::optionsFilterer(string& filterText)
+vector<pair<wstring, void (*)(wstring)>> wconsoleMenu::optionsFilterer(wstring& filterText)
 {
-	vector<pair<string, void (*)(string)>> filteredOptions;
+	vector<pair<wstring, void (*)(wstring)>> filteredOptions;
 
 	for (int i = 0; i < options.size(); i++)
 	{
 		if (filterText.length() <= options[i].first.length() && filterText == options[i].first.substr(0, filterText.length()))
 			filteredOptions.push_back(options[i]);
 	}
-	if (!isExitTextEmpty) filteredOptions.push_back(pair<string, void (*)(string)>(exitText, [](string) {}));
+	if (!isExitTextEmpty) filteredOptions.push_back(pair<wstring, void (*)(wstring)>(exitText, [](wstring) {}));
 
 	return filteredOptions;
 }
 
-void consoleMenu::displayFilteredOptions(string& filterText, vector<pair<string, void (*)(string)>>& filteredOptions)
+void wconsoleMenu::displayFilteredOptions(wstring& filterText, vector<pair<wstring, void (*)(wstring)>>& filteredOptions)
 {
-	system("cls");
-	cout << selectText << filterText;
+	_wsystem(L"cls");
+	wcout << selectText << filterText;
 
 	point.X = 2;
 	if (filteredOptions.size() > 0)
@@ -259,14 +263,14 @@ void consoleMenu::displayFilteredOptions(string& filterText, vector<pair<string,
 		{
 			point.Y = 1 + i;
 			SetConsoleCursorPosition(consoleHandle, point);
-			cout << filteredOptions[i].first;
+			wcout << filteredOptions[i].first;
 		}
 	}
 	else
 	{
 		point.Y = 1;
 		SetConsoleCursorPosition(consoleHandle, point);
-		cout << "Nothing not found! Try something else.";
+		wcout << L"Nothing not found! Try something else.";
 	}
 
 	point.X = selectText.length() + filterText.length();
@@ -274,29 +278,29 @@ void consoleMenu::displayFilteredOptions(string& filterText, vector<pair<string,
 	SetConsoleCursorPosition(consoleHandle, point);
 }
 
-short consoleMenu::singleSelectWithFilter()
+short wconsoleMenu::singleSelectWithFilter()
 {
 	if (options.size() == 0) return -1;
 	if (isSelectTextEmpty) isSelectTextEmpty = false;
 	currentPosition = 0;
 
-	string filterText = "";
-	vector<pair<string, void (*)(string)>> filteredOptions = optionsFilterer(filterText);
+	wstring filterText = L"";
+	vector<pair<wstring, void (*)(wstring)>> filteredOptions = optionsFilterer(filterText);
 
 	displayFilteredOptions(filterText, filteredOptions);
-	for (;;Sleep(10))
+	for (;; Sleep(10))
 	{
-		char ch;
+		wchar_t wch;
 
-		if (ch = _getch())
+		if (wch = _getwch())
 		{
-			if (ch == 27)
+			if (wch == 27)
 			{
-				system("cls");
-				isSelectTextEmpty = (selectText == "");
+				_wsystem(L"cls");
+				isSelectTextEmpty = (selectText == L"");
 				return -1;
 			}
-			else if (ch == 13)
+			else if (wch == 13)
 			{
 				if (filteredOptions.size() == 0) continue;
 
@@ -329,7 +333,7 @@ short consoleMenu::singleSelectWithFilter()
 			}
 			else
 			{
-				if (ch == 8)
+				if (wch == 8)
 				{
 					if (filterText.length() > 0)
 					{
@@ -341,13 +345,13 @@ short consoleMenu::singleSelectWithFilter()
 				}
 				else
 				{
-					if (ch == -32)
+					if ((char)wch == -32)
 					{
-						ignore = _getch();
+						ignore = _getwch();
 						continue;
 					}
 
-					filterText += ch;
+					filterText += wch;
 
 					filteredOptions = optionsFilterer(filterText);
 					displayFilteredOptions(filterText, filteredOptions);
@@ -357,28 +361,28 @@ short consoleMenu::singleSelectWithFilter()
 	}
 }
 
-void consoleMenu::cyclicSelectWithFilter()
+void wconsoleMenu::cyclicSelectWithFilter()
 {
 	if (options.size() == 0) return;
 	if (isSelectTextEmpty) isSelectTextEmpty = false;
 
-	string filterText = "";
-	vector<pair<string, void (*)(string)>> filteredOptions = optionsFilterer(filterText);
+	wstring filterText = L"";
+	vector<pair<wstring, void (*)(wstring)>> filteredOptions = optionsFilterer(filterText);
 
 	displayFilteredOptions(filterText, filteredOptions);
-	for (;;Sleep(10))
+	for (;; Sleep(10))
 	{
-		char ch;
+		wchar_t wch;
 
-		if (ch = _getch())
+		if (wch = _getwch())
 		{
-			if (ch == 27)
+			if (wch == 27)
 			{
-				system("cls");
-				isSelectTextEmpty = (selectText == "");
+				_wsystem(L"cls");
+				isSelectTextEmpty = (selectText == L"");
 				return;
 			}
-			else if (ch == 13)
+			else if (wch == 13)
 			{
 				if (filteredOptions.size() == 0) continue;
 
@@ -395,7 +399,7 @@ void consoleMenu::cyclicSelectWithFilter()
 			}
 			else
 			{
-				if (ch == 8)
+				if (wch == 8)
 				{
 					if (filterText.length() > 0)
 					{
@@ -407,13 +411,13 @@ void consoleMenu::cyclicSelectWithFilter()
 				}
 				else
 				{
-					if (ch == -32)
+					if ((char)wch == -32)
 					{
-						ignore = _getch();
+						ignore = _getwch();
 						continue;
 					}
 
-					filterText += ch;
+					filterText += wch;
 
 					filteredOptions = optionsFilterer(filterText);
 					displayFilteredOptions(filterText, filteredOptions);
