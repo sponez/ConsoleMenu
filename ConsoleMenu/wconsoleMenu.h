@@ -18,7 +18,6 @@ class wconsoleMenu : consoleParameters
 	short currentPosition{};
 	vector<pair<wstring, void (*)(wstring)>> options{};
 
-	void menuCreator(vector<wstring>&, wstring, wstring); //Manual initializer
 	void drawMenu(vector<pair<wstring, void (*)(wstring)>>&, wstring); //Draw all options
 	void redrawMenu(vector<pair<wstring, void (*)(wstring)>>&, short); //Redraw changed options
 	bool selectController(vector<pair<wstring, void (*)(wstring)>>&, wstring); //Controller for menu
@@ -29,7 +28,6 @@ public:
 	//Initializers
 	wconsoleMenu() {}; //Empty console menu
 	wconsoleMenu(vector<wstring>&, vector<void (*)(wstring)>&, wstring, wstring); //Console menu with different functions
-	wconsoleMenu(vector<wstring>&, void (*function)(wstring), wstring, wstring); //Console menu with one function
 
 //Other public functions
 	short singleSelect();
@@ -38,7 +36,7 @@ public:
 	void cyclicSelectWithFilter();
 };
 
-void wconsoleMenu::menuCreator(vector<wstring>& optionNames, wstring selectText, wstring exitText)
+wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, vector<void (*)(wstring)>& optionFunctions, wstring selectText = L"", wstring exitText = L"")
 {
 	ignore = _setmode(_fileno(stdout), _O_U16TEXT);
 	ignore = _setmode(_fileno(stdin), _O_U16TEXT);
@@ -62,11 +60,6 @@ void wconsoleMenu::menuCreator(vector<wstring>& optionNames, wstring selectText,
 	isExitTextEmpty = (exitText == L"");
 
 	currentPosition = 0;
-}
-
-wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, vector<void (*)(wstring)>& optionFunctions, wstring selectText = L"", wstring exitText = L"")
-{
-	menuCreator(optionNames, selectText, exitText);
 
 	if (optionNames.size() != optionFunctions.size())
 	{
@@ -77,14 +70,6 @@ wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, vector<void (*)(wstring
 
 	for (unsigned short i = 0; i < optionNames.size(); i++)
 		options.push_back(pair<wstring, void (*)(wstring)>(optionNames[i], optionFunctions[i]));
-}
-
-wconsoleMenu::wconsoleMenu(vector<wstring>& optionNames, void(*function)(wstring), wstring selectText = L"", wstring exitText = L"")
-{
-	menuCreator(optionNames, selectText, exitText);
-
-	for (unsigned short i = 0; i < optionNames.size(); i++)
-		options.push_back(pair<wstring, void (*)(wstring)>(optionNames[i], function));
 }
 
 void wconsoleMenu::drawMenu(vector<pair<wstring, void (*)(wstring)>>& options, wstring filterText)
@@ -155,6 +140,8 @@ bool wconsoleMenu::selectController(vector<pair<wstring, void (*)(wstring)>>& op
 			GetWindowRect(consoleWindow, &windowRect);
 			if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
 				ShowWindow(consoleWindow, SW_MINIMIZE);
+
+			while (GetAsyncKeyState(VK_LBUTTON)) { Sleep(10); }
 		}
 
 		if (GetAsyncKeyState(VK_MENU) && GetAsyncKeyState(VK_TAB))
@@ -177,7 +164,7 @@ bool wconsoleMenu::selectController(vector<pair<wstring, void (*)(wstring)>>& op
 		if (GetAsyncKeyState(VK_RETURN))
 		{
 			wcin.ignore(LLONG_MAX, '\n');
-			while (_kbhit()) ignore = _getch();
+			while (_kbhit()) ignore = _getwch();
 
 			onCursor();
 			_wsystem(L"cls");
@@ -187,7 +174,7 @@ bool wconsoleMenu::selectController(vector<pair<wstring, void (*)(wstring)>>& op
 
 		if (GetAsyncKeyState(VK_BACK))
 		{
-			while (_kbhit()) ignore = _getch();
+			while (_kbhit()) ignore = _getwch();
 
 			currentPosition = 0;
 			onCursor();

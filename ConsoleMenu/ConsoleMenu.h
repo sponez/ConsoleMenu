@@ -18,7 +18,6 @@ class consoleMenu : consoleParameters
 	short currentPosition{};
 	vector<pair<string, void (*)(string)>> options{};
 
-	void menuCreator(vector<string>&, string, string); //Manual initializer
 	void drawMenu(vector<pair<string, void (*)(string)>>&, string); //Draw all options
 	void redrawMenu(vector<pair<string, void (*)(string)>>& , short); //Redraw changed options
 	bool selectController(vector<pair<string, void (*)(string)>>&, string); //Controller for menu
@@ -29,7 +28,6 @@ public:
 //Initializers
 	consoleMenu() {}; //Empty console menu
 	consoleMenu(vector<string>&, vector<void (*)(string)>&, string, string); //Console menu with different functions
-	consoleMenu(vector<string>&, void (*function)(string), string, string); //Console menu with one function
 
 //Other public functions
 	short singleSelect();
@@ -38,7 +36,7 @@ public:
 	void cyclicSelectWithFilter();
 };
 
-void consoleMenu::menuCreator(vector<string>& optionNames, string selectText, string exitText)
+consoleMenu::consoleMenu(vector<string>& optionNames, vector<void (*)(string)>& optionFunctions, string selectText = "", string exitText = "")
 {
 	if (optionNames.size() > SHRT_MAX)
 	{
@@ -58,11 +56,6 @@ void consoleMenu::menuCreator(vector<string>& optionNames, string selectText, st
 	isExitTextEmpty = (exitText == "");
 
 	currentPosition = 0;
-}
-
-consoleMenu::consoleMenu(vector<string>& optionNames, vector<void (*)(string)>& optionFunctions, string selectText = "", string exitText = "")
-{
-	menuCreator(optionNames, selectText, exitText);
 
 	if (optionNames.size() != optionFunctions.size())
 	{
@@ -73,14 +66,6 @@ consoleMenu::consoleMenu(vector<string>& optionNames, vector<void (*)(string)>& 
 
 	for (unsigned short i = 0; i < optionNames.size(); i++)
 		options.push_back(pair<string, void (*)(string)>(optionNames[i], optionFunctions[i]));
-}
-
-consoleMenu::consoleMenu(vector<string>& optionNames, void(*function)(string), string selectText = "", string exitText = "")
-{
-	menuCreator(optionNames, selectText, exitText);
-
-	for (unsigned short i = 0; i < optionNames.size(); i++)
-		options.push_back(pair<string, void (*)(string)>(optionNames[i], function));
 }
 
 void consoleMenu::drawMenu(vector<pair<string, void (*)(string)>>& options, string filterText)
@@ -151,6 +136,8 @@ bool consoleMenu::selectController(vector<pair<string, void (*)(string)>>& optio
 			GetWindowRect(consoleWindow, &windowRect);
 			if (cursorPosition.x < windowRect.left || cursorPosition.x > windowRect.right || cursorPosition.y < windowRect.top || cursorPosition.y > windowRect.bottom)
 				ShowWindow(consoleWindow, SW_MINIMIZE);
+
+			while (GetAsyncKeyState(VK_LBUTTON)) { Sleep(10); }
 		}
 
 		if (GetAsyncKeyState(VK_MENU) && GetAsyncKeyState(VK_TAB))

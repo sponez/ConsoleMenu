@@ -21,6 +21,7 @@ void toBranch(wstring) { branch.cyclicSelect(); }
 
 int main()
 {
-	branch = wconsoleMenu(options, emptyFunc, L"", L"Назад");
+	vector<void (*)(wstring)> branchFuncs = { emptyFunc , emptyFunc };
+	branch = wconsoleMenu(options, branchFuncs, L"", L"Назад");
 	wcout << root.singleSelectWithFilter() << endl;
 }
